@@ -1,0 +1,32 @@
+name: Update Qualité Air SBH
+
+on:
+  schedule:
+    # 5h00 heure de Saint-Barthélemy (UTC-4, pas de changement d'heure)
+    # = 9h00 UTC
+    - cron: '0 9 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Update sbh-qualite-air.html
+        env:
+          IQAIR_API_KEY: ${{ secrets.IQAIR_API_KEY }}
+        run: python3 update_qualite_air.py
+
+      - name: Commit & push si changement
+        run: |
+          git config user.name "novactu-bot"
+          git config user.email "actions@github.com"
+          git add sbh-qualite-air.html
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update qualité air $(date -u +'%Y-%m-%d %H:%M UTC')" && git push)
